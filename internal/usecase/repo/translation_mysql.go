@@ -5,32 +5,31 @@ import (
 	"fmt"
 
 	"github.com/evrone/go-clean-template/internal/entity"
-	"github.com/evrone/go-clean-template/pkg/postgres"
 )
 
 const _defaultEntityCap = 64
 
 // TranslationRepo -.
 type TranslationRepo struct {
-	*postgres.Postgres
+	db DB
 }
 
 // New -.
-func New(pg *postgres.Postgres) *TranslationRepo {
-	return &TranslationRepo{pg}
+func New(db DB) *TranslationRepo {
+	return &TranslationRepo{db: db}
 }
 
 // GetHistory -.
 func (r *TranslationRepo) GetHistory(ctx context.Context) ([]entity.Translation, error) {
-	sql, _, err := r.Builder.
+	sql, _, err := r.db.Builder().
 		Select("source, destination, original, translation").
 		From("history").
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("TranslationRepo - GetHistory - r.Builder: %w", err)
+		return nil, fmt.Errorf("TranslationRepo - GetHistory - r.builder: %w", err)
 	}
 
-	rows, err := r.Pool.Query(ctx, sql)
+	rows, err := r.db.Connection().QueryContext(ctx, sql)
 	if err != nil {
 		return nil, fmt.Errorf("TranslationRepo - GetHistory - r.Pool.Query: %w", err)
 	}
@@ -54,16 +53,16 @@ func (r *TranslationRepo) GetHistory(ctx context.Context) ([]entity.Translation,
 
 // Store -.
 func (r *TranslationRepo) Store(ctx context.Context, t entity.Translation) error {
-	sql, args, err := r.Builder.
+	sql, args, err := r.db.Builder().
 		Insert("history").
 		Columns("source, destination, original, translation").
 		Values(t.Source, t.Destination, t.Original, t.Translation).
 		ToSql()
 	if err != nil {
-		return fmt.Errorf("TranslationRepo - Store - r.Builder: %w", err)
+		return fmt.Errorf("TranslationRepo - Store - r.builder: %w", err)
 	}
 
-	_, err = r.Pool.Exec(ctx, sql, args...)
+	_, err = r.db.Connection().ExecContext(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("TranslationRepo - Store - r.Pool.Exec: %w", err)
 	}

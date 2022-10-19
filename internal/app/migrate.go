@@ -10,7 +10,7 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	// migrate tools
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
@@ -25,7 +25,7 @@ func init() {
 		log.Fatalf("migrate: environment variable not declared: PG_URL")
 	}
 
-	databaseURL += "?sslmode=disable"
+	//databaseURL += "?sslmode=disable"
 
 	var (
 		attempts = _defaultAttempts
@@ -34,7 +34,7 @@ func init() {
 	)
 
 	for attempts > 0 {
-		m, err = migrate.New("file://migrations", databaseURL)
+		m, err = migrate.New("file://migrations", "mysql://"+databaseURL)
 		if err == nil {
 			break
 		}
